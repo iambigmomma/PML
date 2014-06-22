@@ -1,0 +1,51 @@
+Practical Maching Learning Couse Project
+========================================================
+
+### Loading the basic library
+```{r}
+library(caret)
+library(randomForest)
+```
+
+### Loading the orignal data form csv file
+```{r}
+trainRawData <- read.csv("pml-training.csv",na.strings=c("NA",""))
+testRawData  <- read.csv("pml-testing.csv",na.strings=c("NA",""))
+```
+
+### Cleanup the NA data in the original data
+```{r}
+NAs <- apply(trainRawData,2,function(x) {sum(is.na(x))}) 
+validData <- trainRawData[,which(NAs == 0)]
+```
+
+### Partition the "clean" data into training set and test set for cross validation
+```{r}
+trainIndex <- createDataPartition(y = validData$classe, p=0.2,list=FALSE) # 3927 rows
+trainData <- validData[trainIndex,]
+testData <- validData[-trainIndex,]
+
+removeIndex <- grep("timestamp|X|user_name|new_window",names(trainData))
+trainData <- trainData[,-removeIndex]
+```
+
+### Train the model with the clean and selected training set by random forest
+```{r}
+modFit <- train(trainData$classe ~.,data = trainData,method="rf")
+modFit
+```
+
+### Using test set to calculate the sample error rate
+```{r}
+predictions = predict(modFit,testData)
+accuracy_true <- sum(predictions == testData$classe)/length(predictions)
+sample_error = 1 -accuracy_true
+cat("Sample error rate: ", sample_error*100,"%")
+```
+
+### Try to evaluate the sample error and the prediction result
+```{r}
+pred <- predict(modFit,testRawData)
+print(pred)
+
+```
